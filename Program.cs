@@ -87,6 +87,67 @@ foreach (var ch in result)
     Console.Write(ch);
 }
 
+
+static List<string> GetWordSuggestions(string str1, List<string> correctWords)
+{
+    List<string> suggestions = new List<string>();
+
+    int minDistance = int.MaxValue;
+
+    foreach (string correctWord in correctWords)
+    {
+        int distance = LevenshteinDistance(str1, correctWord);
+        if (distance < minDistance)  // перевіряємо, чи поточна відстань менша за мінімальну
+        {
+            minDistance = distance;  // якщо так, оновлюємо мінімальну відстань
+            suggestions.Clear();      // очищаємо список попередніх найближчих слів
+            suggestions.Add(correctWord);  // додаємо поточне слово в список
+        }
+        else if (distance == minDistance)  // якщо відстань така ж, як мінімальна
+        {
+            suggestions.Add(correctWord);  // додаємо слово в список
+        }
+    }
+
+    return suggestions;
+}
+
+static int LevenshteinDistance(string str1, string str2)
+{
+    int[,] distanceMatrix = new int[str1.Length + 1, str2.Length + 1]; // створюється 2д матриця 
+
+    for (int i = 0; i <= str1.Length; i++) // перший рядок матриці заповнюється послідовними числами від 0 до str1.Length
+    {
+        distanceMatrix[i, 0] = i;
+    }
+
+    for (int j = 0; j <= str2.Length; j++) //  перший стовпець матриці заповнюється послідовними числами від 0 до str2.Length
+    {
+        distanceMatrix[0, j] = j;
+    }
+
+    for (int i = 1; i <= str1.Length; i++)
+    {
+        for (int j = 1; j <= str2.Length; j++)
+        {
+            int cost;
+            if (str1[i - 1] == str2[j - 1])
+            {
+                cost = 0; // якщо символи рівні, вартість редагування 0
+            }
+            else
+            {
+                cost = 1; // якщо символи відмінні, вартість редагування 1
+            }
+            distanceMatrix[i, j] = Math.Min(distanceMatrix[i - 1, j] + 1, Math.Min(distanceMatrix[i, j - 1] + 1, distanceMatrix[i - 1, j - 1] + cost)); //додавання, видалення та заміна символа в str1
+        }
+    }
+
+    return distanceMatrix[str1.Length, str2.Length];
+}
+
+
+
 // debugging function
 void PrintMatrix(int[,] table, string s1, string s2)
 {
