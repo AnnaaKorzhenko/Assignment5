@@ -19,74 +19,77 @@ foreach (var word in userWords)
             break;
         }
     }
+
     if (isFound == false)
     {
         Console.WriteLine($"[Error] {word} not found!");
+        var suggestions = GetWordSuggestions(word, correctWords.ToList());
+        Console.WriteLine("Suggestions:");
+        foreach (var suggestion in suggestions.Take(5))
+        {
+            Console.WriteLine(suggestion);
+        }
         badWords.Add(word);
     }
-}
-
-Console.Write("Looks like you have typos in those words: ");
-foreach (var badWord in badWords)
-{
-    Console.Write(badWord);
-    Console.Write(" ");
 }
 
 
 // LCS algorithm
 //===============================================================================
+string LCSfunction(string s1, string s2)
+{
+    // first, we find the length of the LCS
+    var result = new List<char>();
+    var resultString = "";
 
-// first, we find the length of the LCS
-var s1 = "AoKfE";
-var s2 = "gAKrE";
-var result = new List<char>();
+    var rowN = s1.Length;
+    var colN = s2.Length;
 
-var rowN = s1.Length;
-var colN = s2.Length;
+    // 2d array for storing lcs
+    var table = new int[rowN + 1, colN + 1];
 
-// 2d array for storing lcs
-var table = new int[rowN + 1, colN + 1];
+    // we go through each cell in the table
+    for (int r = 1; r <= rowN; r++) {
+        for (int c = 1; c <= colN; c++) {
+            if (s1[r - 1] == s2[c - 1]) { // because 1&1 cell in the table compares 0&0 characters from the strings
+                table[r, c] = table[r - 1, c - 1] + 1; // if matching
+            }
+            else {
+                table[r, c] = Math.Max(table[r, c - 1], table[r - 1, c]); //if not matching, we choose max from left and top
+            }
+            //PrintMatrix(table, s1, s2);
+        }
+    }
+    PrintMatrix(table, s1, s2);
 
-// we go through each cell in the table
-for (int r = 1; r <= rowN; r++) {
-    for (int c = 1; c <= colN; c++) {
-        if (s1[r - 1] == s2[c - 1]) { // because 1&1 cell in the table compares 0&0 characters from the strings
-            table[r, c] = table[r - 1, c - 1] + 1; // if matching
+    // second, we find the actual letters of the LCS
+    // Start from the bottom right corner of the filled table and go back to find the LCS
+    while (rowN > 0 && colN > 0) {
+    
+        if (s1[rowN - 1] == s2[colN - 1]) {
+            result.Add(s1[rowN - 1]); //if match, add to result and move back by diagonal
+            rowN--; 
+            colN--;
+        }
+        else if (table[rowN - 1, colN] > table[rowN, colN - 1]) {
+            rowN--; // if top is max, move up
         }
         else {
-            table[r, c] = Math.Max(table[r, c - 1], table[r - 1, c]); //if not matching, we choose max from left and top
+            colN--; // if left is max, move left
         }
-        //PrintMatrix(table, s1, s2);
     }
+
+    result.Reverse();
+    foreach (var ch in result)
+    {
+        Console.Write(ch);
+    }
+
+    return resultString;
 }
-PrintMatrix(table, s1, s2);
 
 //===============================================================================
-
-// second, we find the actual letters of the LCS
-// Start from the bottom-right corner of the filled table and trace back to find the LCS
-while (rowN > 0 && colN > 0) {
-    
-    if (s1[rowN - 1] == s2[colN - 1]) {
-        result.Add(s1[rowN - 1]); //if match, add to result and move back by diagonal
-        rowN--; 
-        colN--;
-    }
-    else if (table[rowN - 1, colN] > table[rowN, colN - 1]) {
-        rowN--; // if top is max, move up
-    }
-    else {
-        colN--; // if left is max, move left
-    }
-}
-
-result.Reverse();
-foreach (var ch in result)
-{
-    Console.Write(ch);
-}
-
+// getting suggestions
 
 static List<string> GetWordSuggestions(string str1, List<string> correctWords)
 {
@@ -112,6 +115,9 @@ static List<string> GetWordSuggestions(string str1, List<string> correctWords)
     return suggestions;
 }
 
+
+//===============================================================================
+// levenshtein
 static int LevenshteinDistance(string str1, string str2)
 {
     int[,] distanceMatrix = new int[str1.Length + 1, str2.Length + 1]; // створюється 2д матриця 
@@ -130,16 +136,20 @@ static int LevenshteinDistance(string str1, string str2)
     {
         for (int j = 1; j <= str2.Length; j++)
         {
-            int cost;
+            int cost = 1; // in general case, we set the cost of any change to 1 (delete, replace, insert)
             if (str1[i - 1] == str2[j - 1])
             {
                 cost = 0; // якщо символи рівні, вартість редагування 0
             }
-            else
+            
+            int swapCost = int.MaxValue;
+            // Check if swapping adjacent letters is possible and update swapCost
+            if (i > 1 && j > 1 && str1[i - 1] == str2[j - 2] && str1[i - 2] == str2[j - 1]) // swapping letters
             {
-                cost = 1; // якщо символи відмінні, вартість редагування 1
+                swapCost = distanceMatrix[i - 2, j - 2] + 1;
             }
-            distanceMatrix[i, j] = Math.Min(distanceMatrix[i - 1, j] + 1, Math.Min(distanceMatrix[i, j - 1] + 1, distanceMatrix[i - 1, j - 1] + cost)); //додавання, видалення та заміна символа в str1
+            distanceMatrix[i, j] = Math.Min(distanceMatrix[i - 1, j] + cost, Math.Min(distanceMatrix[i, j - 1] + cost, Math.Min(distanceMatrix[i - 1, j - 1] + cost, swapCost))); 
+            //додавання, видалення та заміна символа в str1 + swap
         }
     }
 
@@ -147,7 +157,7 @@ static int LevenshteinDistance(string str1, string str2)
 }
 
 
-
+//===============================================================================
 // debugging function
 void PrintMatrix(int[,] table, string s1, string s2)
 {
@@ -163,3 +173,7 @@ void PrintMatrix(int[,] table, string s1, string s2)
         Console.WriteLine();
     }
 }
+
+/*var s1 = "AoKfE";
+var s2 = "gAKrE";
+LCSfunction(s1, s2);*/
