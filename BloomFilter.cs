@@ -29,40 +29,37 @@ class BloomFilter
     // counting 1 hash for a specific word
     private int GetHash(string word, int seed)
     {
-        /*unchecked // Prevent overflow exceptions*/
         {
-            int hashValue = 11; // Initial hash value
+            int hashValue = 11; // starting hash value, any random number
             foreach (char c in word)
             {
-                hashValue = hashValue * c + seed; // Update hash value using characters of the word and seed
+                hashValue = hashValue * c + seed; // hash function
             }
             var module = Math.Abs(hashValue % _size);
 
-            return module; // Return final hash value
+            return module; // final hash, mod _size
         }
     }
 
-    // Add a word to the Bloom filter
+    // Add the word to the Bloom filter
     public void Add(string word)
     {
         foreach (int seed in _hashSeeds)
         {
-            int index = GetHash(word, seed); // Calculate index using hash seed
-            _bitArray[index] = true; // Set bit at calculated index to true
+            int index = GetHash(word, seed);
+            _bitArray[index] = true;
         }
     }
 
-    // Check if a word might be in the dictionary
+    // Check if the word might be in the dictionary
     public bool MightContain(string word)
     {
         foreach (int seed in _hashSeeds)
         {
-            int index = GetHash(word, seed); // Calculate index using hash seed
-            if (!_bitArray[index]) // If any bit is false, the word is definitely not in the dictionary
+            int index = GetHash(word, seed);
+            if (!_bitArray[index])
                 return false;
         }
-
-        // If all bits are set, the word might be in the dictionary (false positives are possible)
         return true;
     }
 }
