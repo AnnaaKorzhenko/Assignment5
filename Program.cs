@@ -1,42 +1,58 @@
-﻿// this is preparation
+﻿using Assignment5;
+
+// this is preparation
 //===============================================================================
 Console.Write("Please, enter some words > ");
 var userInput = Console.ReadLine();
 var userWords = userInput.Split();
-var badWords = new List<string>();
 var correctWords = File.ReadAllLines("../../../words_list.txt");
+
+BloomFilter filter = new BloomFilter(100, 5);
+foreach (var word in correctWords)
+{
+    filter.Add(word);
+}
 
 foreach (var word in userWords)
 {
-    Console.WriteLine(word);
-    var isFound = false;
-    foreach (var correctWord in correctWords)
+    if (filter.MightContain(word))
     {
-        if (correctWord == word)
+        var isFound = false;
+        foreach (var correctWord in correctWords)
         {
-            Console.WriteLine($"[OK] {word} found!");
-            isFound = true;
-            break;
+            if (correctWord == word)
+            {
+                Console.WriteLine($"[OK] {word} found!");
+                isFound = true;
+                break;
+            }
+        }
+
+        if (!isFound)
+        {
+            Suggest(word, correctWords);
         }
     }
-
-    if (isFound == false)
+    else
     {
-        Console.WriteLine($"[Error] {word} not found!");
-        var suggestions = GetWordSuggestions(word, correctWords.ToList());
-        Console.WriteLine("Suggestions:");
-        foreach (var suggestion in suggestions.Take(5))
-        {
-            Console.WriteLine(suggestion);
-        }
-        badWords.Add(word);
+        Suggest(word, correctWords);
     }
 }
 
+void Suggest(string word, string[] correct)
+{
+    Console.WriteLine($"[Error] {word} not found!");
+    var suggestions = GetWordSuggestions(word, correct.ToList());
+    Console.WriteLine("Suggestions:");
+    foreach (var suggestion in suggestions.Take(5))
+    {
+        Console.WriteLine(suggestion);
+    }
+}
 
 // LCS algorithm
 //===============================================================================
-string LCSfunction(string s1, string s2)
+string LcsFunction(string s1, string s2)
 {
     // first, we find the length of the LCS
     var result = new List<char>();
@@ -176,4 +192,4 @@ void PrintMatrix(int[,] table, string s1, string s2)
 
 /*var s1 = "AoKfE";
 var s2 = "gAKrE";
-LCSfunction(s1, s2);*/
+LcsFunction(s1, s2);*/
